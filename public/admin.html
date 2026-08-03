@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin - FM La Tranquera</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#fdf9f4",
+                        "background": "#fdf9f4",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#fdf9f4",
+                        "primary": "#442a22",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#fed39f",
+                        "tertiary-container": "#354d38",
+                        "surface-variant": "#e6e2dd",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#1c1c19",
+                        "on-secondary-fixed": "#2a1700",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f7f3ee",
+                        "surface-container-high": "#ebe8e3",
+                        "tertiary": "#1e3623",
+                        "secondary": "#78582f",
+                        "tertiary-fixed": "#cdeace",
+                        "primary-fixed-dim": "#e7bdb1",
+                        "surface-tint": "#77574d",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f4f0eb",
+                        "surface-container-highest": "#e6e2dd",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#344c38",
+                        "tertiary-fixed-dim": "#b2ceb3",
+                        "outline-variant": "#d4c3be",
+                        "primary-fixed": "#ffdbd0",
+                        "surface-container": "#f1ede8",
+                        "on-primary-fixed-variant": "#5d4037",
+                        "on-tertiary-fixed": "#08200f",
+                        "surface-dim": "#ddd9d5",
+                        "on-secondary-container": "#795930",
+                        "on-surface-variant": "#504441",
+                        "on-primary-container": "#d4ada1",
+                        "on-primary-fixed": "#2c160e",
+                        "secondary-fixed": "#ffddb7",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#e7bdb1",
+                        "secondary-fixed-dim": "#eabf8d",
+                        "on-tertiary-container": "#a1bda3",
+                        "on-secondary-fixed-variant": "#5e411a",
+                        "on-background": "#1c1c19",
+                        "inverse-surface": "#31302d",
+                        "primary-container": "#5d4037",
+                        "outline": "#827470"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "margin-desktop": "40px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Domine"],
+                        "body-md": ["'Source Sans 3'"],
+                        "body-lg": ["'Source Sans 3'"],
+                        "label-sm": ["'Source Sans 3'"],
+                        "display-lg-mobile": ["Domine"],
+                        "display-lg": ["Domine"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background-color: #fdf9f4;
+            color: #1c1c19;
+            font-family: 'Source Sans 3', sans-serif;
+            overflow-x: hidden;
+        }
+        .rustic-border {
+            border: 1px solid #d4c3be;
+        }
+    </style>
+</head>
+<body class="bg-surface selection:bg-secondary-container selection:text-on-secondary-container">
+    <header class="bg-surface border-b border-outline-variant py-4">
+        <div class="max-w-container-max mx-auto px-margin-desktop flex justify-between items-center">
+            <h1 class="font-display-lg-mobile text-primary">Panel de Administración</h1>
+            <a href="/" class="text-secondary font-bold hover:underline">Volver al sitio</a>
+        </div>
+    </header>
+    <main class="max-w-container-max mx-auto px-margin-desktop py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <!-- Formulario -->
+        <div>
+            <h2 class="font-headline-md mb-6 text-primary">Agregar Nueva Noticia</h2>
+            <form id="news-form" class="bg-surface-container-low p-6 rounded-lg rustic-border space-y-4">
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Título</label>
+                    <input type="text" name="title" required class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Resumen</label>
+                    <textarea name="excerpt" required rows="4" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary"></textarea>
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Fecha</label>
+                    <input type="text" name="date" placeholder="Ej: 12 OCTUBRE, 2024" required class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Imagen (Archivo)</label>
+                    <input type="file" name="image" accept="image/*" class="w-full text-sm">
+                </div>
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" name="is_main" id="is_main" class="rounded text-secondary focus:ring-secondary">
+                    <label for="is_main" class="font-label-sm text-on-surface-variant">Destacar como noticia principal</label>
+                </div>
+                <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">PUBLICAR NOTICIA</button>
+            </form>
+        </div>
+        <!-- Lista de noticias -->
+        <div>
+            <h2 class="font-headline-md mb-6 text-primary">Noticias Publicadas</h2>
+            <div id="news-list" class="space-y-4">
+                <!-- Javascript will populate this -->
+            </div>
+        </div>
+    </main>
+    <script>
+        async function fetchNews() {
+            const res = await fetch('/api/news');
+            const data = await res.json();
+            const list = document.getElementById('news-list');
+            list.innerHTML = '';
+            
+            if (data.data.length === 0) {
+                list.innerHTML = '<p class="text-on-surface-variant">No hay noticias publicadas.</p>';
+            }
+
+            data.data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-surface-container-low p-4 rounded-lg rustic-border flex justify-between items-center';
+                div.innerHTML = `
+                    <div class="flex gap-4 items-center">
+                        ${item.image_url ? `<img src="${item.image_url}" class="w-16 h-16 object-cover rounded">` : ''}
+                        <div>
+                            <p class="font-label-sm text-secondary">${item.date}</p>
+                            <h3 class="font-bold text-lg">${item.title} ${item.is_main ? '⭐' : ''}</h3>
+                        </div>
+                    </div>
+                    <button onclick="deleteNews(${item.id})" class="text-error hover:text-red-700 bg-error-container p-2 rounded material-symbols-outlined">delete</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function deleteNews(id) {
+            if(confirm('¿Seguro que deseas eliminar esta noticia?')) {
+                await fetch('/api/news/' + id, { method: 'DELETE' });
+                fetchNews();
+            }
+        }
+
+        document.getElementById('news-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.set('is_main', formData.get('is_main') ? '1' : '0');
+
+            const res = await fetch('/api/news', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                e.target.reset();
+                fetchNews();
+                alert('Noticia publicada exitosamente');
+            } else {
+                alert('Error al publicar');
+            }
+        });
+
+        fetchNews();
+    </script>
+</body>
+</html>
