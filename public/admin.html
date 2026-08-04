@@ -181,7 +181,7 @@
                 </button>
             </div>
         </div>
-        <div id="messages-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div id="messages-list" class="grid grid-cols-1 gap-2">
             <!-- Javascript will populate this -->
         </div>
     </section>
@@ -291,20 +291,22 @@
                 data.data.forEach(item => {
                     const date = new Date(item.created_at).toLocaleString('es-AR');
                     const div = document.createElement('div');
-                    div.className = `bg-surface-container-low p-4 rounded-lg rustic-border flex flex-col gap-2 transition-all ${item.is_read ? 'opacity-60 bg-surface-dim' : ''}`;
+                    div.className = `bg-surface-container-low p-4 rounded-lg rustic-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all ${item.is_read ? 'opacity-60 bg-surface-dim' : ''}`;
                     div.innerHTML = `
-                        <div class="flex justify-between items-start border-b border-outline-variant pb-2">
-                            <div>
+                        <div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                            <div class="col-span-1">
+                                <p class="text-xs text-on-surface-variant mb-1">${date}</p>
                                 <h3 class="font-bold text-lg text-primary ${item.is_read ? 'line-through' : ''}">${item.name}</h3>
                                 <p class="font-label-sm text-secondary">${item.location}</p>
                             </div>
-                            <p class="text-xs text-on-surface-variant">${date}</p>
+                            <div class="col-span-3">
+                                <p class="font-body-md text-on-surface-variant whitespace-pre-wrap">${item.content}</p>
+                            </div>
                         </div>
-                        <p class="font-body-md text-on-surface-variant my-2 whitespace-pre-wrap">${item.content}</p>
-                        <div class="mt-auto flex justify-end">
-                            <label class="flex items-center gap-2 cursor-pointer bg-surface-variant px-3 py-1 rounded-full border border-outline-variant hover:bg-outline-variant transition-colors">
-                                <input type="checkbox" ${item.is_read ? 'checked' : ''} onchange="toggleMessageStatus(${item.id}, this.checked)" class="rounded text-secondary focus:ring-secondary">
-                                <span class="font-label-sm text-on-surface-variant">${item.is_read ? 'Cumplido' : 'Marcar como cumplido'}</span>
+                        <div class="flex-shrink-0 w-full md:w-auto flex justify-end md:justify-center border-t md:border-t-0 md:border-l border-outline-variant pt-3 md:pt-0 md:pl-4 mt-2 md:mt-0">
+                            <label class="flex items-center gap-2 cursor-pointer bg-surface-variant px-3 py-2 rounded-full border border-outline-variant hover:bg-outline-variant transition-colors">
+                                <input type="checkbox" ${item.is_read ? 'checked' : ''} onchange="toggleMessageStatus(${item.id}, this.checked)" class="rounded text-secondary focus:ring-secondary w-5 h-5">
+                                <span class="font-label-sm text-on-surface-variant">${item.is_read ? 'Cumplido' : 'Cumplir'}</span>
                             </label>
                         </div>
                     `;
