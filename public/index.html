@@ -173,7 +173,7 @@
 <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#">Contacto</a>
 </nav>
 <div class="flex items-center gap-4">
-<button class="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2 group">
+<button id="top-play-btn" class="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2 group">
 <span class="material-symbols-outlined group-hover:scale-110 transition-transform">play_circle</span>
                     Escuchar En Vivo
                 </button>
@@ -249,10 +249,10 @@
 <div class="flex items-center gap-6">
 <div class="flex items-center gap-3 bg-primary-container/20 px-4 py-2 rounded-lg pressed-effect">
 <span class="material-symbols-outlined opacity-70">volume_down</span>
-<input class="w-32 accent-secondary bg-surface-variant h-1 rounded-lg cursor-pointer" type="range"/>
+<input id="volume-slider" class="w-32 accent-secondary bg-surface-variant h-1 rounded-lg cursor-pointer" type="range" min="0" max="100" value="100"/>
 <span class="material-symbols-outlined opacity-70">volume_up</span>
 </div>
-<button class="w-20 h-20 rounded-full bg-secondary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all group border-b-4 border-primary">
+<button id="main-play-btn" class="w-20 h-20 rounded-full bg-secondary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all group border-b-4 border-primary">
 <span class="material-symbols-outlined text-5xl">play_arrow</span>
 </button>
 </div>
@@ -497,10 +497,51 @@
         }
         loadNews();
 
+        let streamUrl = '';
+        const audioPlayer = document.createElement('audio');
+        audioPlayer.id = 'radio-player';
+        document.body.appendChild(audioPlayer);
+
+        const topPlayBtn = document.getElementById('top-play-btn');
+        const mainPlayBtn = document.getElementById('main-play-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+
+        let isPlaying = false;
+        function togglePlay() {
+            if (!streamUrl) {
+                alert("La radio no está transmitiendo en este momento.");
+                return;
+            }
+            if (isPlaying) {
+                audioPlayer.pause();
+                audioPlayer.src = ''; 
+                if (topPlayBtn) topPlayBtn.innerHTML = '<span class="material-symbols-outlined group-hover:scale-110 transition-transform">play_circle</span> Escuchar En Vivo';
+                if (mainPlayBtn) mainPlayBtn.innerHTML = '<span class="material-symbols-outlined text-5xl">play_arrow</span>';
+            } else {
+                audioPlayer.src = streamUrl; 
+                audioPlayer.play();
+                if (topPlayBtn) topPlayBtn.innerHTML = '<span class="material-symbols-outlined group-hover:scale-110 transition-transform">pause_circle</span> Pausar';
+                if (mainPlayBtn) mainPlayBtn.innerHTML = '<span class="material-symbols-outlined text-5xl">pause</span>';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        if (topPlayBtn) topPlayBtn.addEventListener('click', togglePlay);
+        if (mainPlayBtn) mainPlayBtn.addEventListener('click', togglePlay);
+
+        if (volumeSlider) {
+            volumeSlider.addEventListener('input', (e) => {
+                audioPlayer.volume = e.target.value / 100;
+            });
+        }
+
         async function loadWeather() {
             try {
                 const settingsRes = await fetch('/api/settings');
                 const settingsData = await settingsRes.json();
+                
+                streamUrl = settingsData.data.stream_url || '';
+                
                 const location = settingsData.data.weather_location || 'Buenos Aires, Argentina';
                 document.getElementById('weather-location-label').innerText = location.toUpperCase();
 
