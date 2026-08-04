@@ -345,7 +345,11 @@ app.get('/api/cron/rss', async (req, res) => {
             return res.json({ message: `Not the right time. Current: ${currentHour}, Target: ${targetHour}` });
         }
 
-        const parser = new Parser();
+        const parser = new Parser({
+            requestOptions: {
+                rejectUnauthorized: false
+            }
+        });
         let logs = [];
 
         // News RSS
