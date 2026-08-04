@@ -197,6 +197,7 @@
             }
 
             data.data.forEach(item => {
+                const itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
                 const div = document.createElement('div');
                 div.className = 'bg-surface-container-low p-4 rounded-lg rustic-border flex justify-between items-center';
                 div.innerHTML = `
@@ -207,10 +208,25 @@
                             <h3 class="font-bold text-lg">${item.title} ${item.is_main ? '⭐' : ''}</h3>
                         </div>
                     </div>
-                    <button onclick="deleteNews(${item.id})" class="text-error hover:text-red-700 bg-error-container p-2 rounded material-symbols-outlined">delete</button>
+                    <div class="flex gap-2">
+                        <button onclick="editNews('${itemJson}')" class="text-secondary hover:text-primary bg-secondary-container p-2 rounded material-symbols-outlined transition-colors">edit</button>
+                        <button onclick="deleteNews(${item.id})" class="text-error hover:text-red-700 bg-error-container p-2 rounded material-symbols-outlined transition-colors">delete</button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
+        }
+
+        function editNews(itemJson) {
+            const item = JSON.parse(itemJson);
+            const form = document.getElementById('news-form');
+            form.elements['news_id'].value = item.id;
+            form.elements['title'].value = item.title;
+            form.elements['excerpt'].value = item.excerpt;
+            form.elements['date'].value = item.date;
+            form.elements['is_main'].checked = item.is_main;
+            document.getElementById('news-form-btn-text').innerText = 'ACTUALIZAR NOTICIA';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function deleteNews(id) {
@@ -225,17 +241,28 @@
             const formData = new FormData(e.target);
             formData.set('is_main', formData.get('is_main') ? '1' : '0');
 
-            const res = await fetch('/api/news', {
-                method: 'POST',
+            const newsId = formData.get('news_id');
+            let url = '/api/news';
+            let method = 'POST';
+            
+            if (newsId) {
+                url = '/api/news/' + newsId;
+                method = 'PUT';
+            }
+
+            const res = await fetch(url, {
+                method: method,
                 body: formData
             });
 
             if (res.ok) {
                 e.target.reset();
+                e.target.elements['news_id'].value = '';
+                document.getElementById('news-form-btn-text').innerText = 'PUBLICAR NOTICIA';
                 fetchNews();
-                alert('Noticia publicada exitosamente');
+                alert(newsId ? 'Noticia actualizada exitosamente' : 'Noticia publicada exitosamente');
             } else {
-                alert('Error al publicar');
+                alert('Error al guardar la noticia');
             }
         });
 
@@ -248,28 +275,98 @@
             if (data.data.stream_url) {
                 document.getElementById('stream_url').value = data.data.stream_url;
             }
+            if (data.data.rss_url) {
+                document.getElementById('rss_url').value = data.data.rss_url;
+            }
+            if (data.data.rss_time) {
+                document.getElementById('rss_time').value = data.data.rss_time;
+            }
         }
 
         document.getElementById('settings-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const location = document.getElementById('weather_location').value;
             const streamUrl = document.getElementById('stream_url').value;
+            const rssUrl = document.getElementById('rss_url').value;
+            const rssTime = document.getElementById('rss_time').value;
             
-            const res1 = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'weather_location', value: location })
+            const reqs = [
+                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'weather_location', value: location }) }),
+                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'stream_url', value: streamUrl }) }),
+                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rss_url', value: rssUrl }) }),
+                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rss_time', value: rssTime }) })
+            ];
+            
+            await Promise.all(reqs);
+            alert('Configuración guardada exitosamente');
+        });
+
+        async function fetchEvents() {
+            const res = await fetch('/api/events');
+            const data = await res.json();
+            const list = document.getElementById('events-list');
+            const btn = document.getElementById('btn-add-event');
+            list.innerHTML = '';
+            
+            if (data.data.length === 0) {
+                list.innerHTML = '<p class="text-on-surface-variant">No hay eventos publicados.</p>';
+            }
+            
+            if (data.data.length >= 3) {
+                btn.disabled = true;
+                btn.innerText = 'LÍMITE ALCANZADO (3 MÁX)';
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.disabled = false;
+                btn.innerText = 'AGREGAR EVENTO';
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            data.data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-surface-container-low p-4 rounded-lg rustic-border flex justify-between items-center';
+                div.innerHTML = `
+                    <div class="flex gap-4 items-center">
+                        <div class="bg-primary text-white p-2 rounded text-center min-w-[3.5rem]">
+                            <p class="font-bold text-xl leading-none">${item.day}</p>
+                            <p class="text-[10px] uppercase">${item.month}</p>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-primary">${item.title}</h3>
+                            <p class="font-label-sm text-secondary">${item.location}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteEvent(${item.id})" class="text-error hover:text-red-700 bg-error-container p-2 rounded material-symbols-outlined">delete</button>
+                `;
+                list.appendChild(div);
             });
-            const res2 = await fetch('/api/settings', {
+        }
+
+        async function deleteEvent(id) {
+            if(confirm('¿Seguro que deseas eliminar este evento?')) {
+                await fetch('/api/events/' + id, { method: 'DELETE' });
+                fetchEvents();
+            }
+        }
+
+        document.getElementById('events-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const res = await fetch('/api/events', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'stream_url', value: streamUrl })
+                body: JSON.stringify(data)
             });
 
-            if (res1.ok && res2.ok) {
-                alert('Configuración guardada exitosamente');
+            if (res.ok) {
+                e.target.reset();
+                fetchEvents();
+                alert('Evento agregado exitosamente');
             } else {
-                alert('Error al guardar la configuración');
+                const err = await res.json();
+                alert(err.error || 'Error al agregar el evento');
             }
         });
 
@@ -345,6 +442,7 @@
 
         fetchNews();
         fetchSettings();
+        fetchEvents();
         fetchMessages();
     </script>
 </body>

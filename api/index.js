@@ -4,7 +4,7 @@ const multer = require('multer');
 const { createClient } = require('@libsql/client');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-
+const Parser = require('rss-parser');
 const app = express();
 
 // Initialize Turso
@@ -51,6 +51,15 @@ async function initDb() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         is_read INTEGER DEFAULT 0
     )`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        day TEXT,
+        month TEXT,
+        title TEXT,
+        location TEXT
+    )`);
+    // Update existing news to JULIO 2026 for demo
+    await db.execute(`UPDATE news SET date = 'JULIO 2026' WHERE date != 'JULIO 2026'`);
   } catch (error) {
     console.error("Database initialization error:", error);
   }
@@ -237,6 +246,126 @@ app.delete('/api/messages', async (req, res) => {
         res.json({ message: "deleted", changes: rs.rowsAffected });
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// --- News Update API ---
+app.put('/api/news/:id', upload.single('image'), async (req, res) => {
+    try {
+        const { title, excerpt, date, is_main } = req.body;
+        const isMainInt = is_main === '1' || is_main === 'true' || is_main === 1 ? 1 : 0;
+        
+        let updateSql = `UPDATE news SET title = ?, excerpt = ?, date = ?, is_main = ?`;
+        let args = [title, excerpt, date, isMainInt];
+
+        if (req.file) {
+            const result = await uploadToCloudinary(req.file.buffer);
+            updateSql += `, image_url = ?`;
+            args.push(result.secure_url);
+        }
+
+        updateSql += ` WHERE id = ?`;
+        args.push(req.params.id);
+
+        await db.execute({ sql: updateSql, args });
+        res.json({ message: "success" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// --- Events API ---
+app.get('/api/events', async (req, res) => {
+    try {
+        const rs = await db.execute("SELECT * FROM events ORDER BY id ASC");
+        res.json({ message: "success", data: rs.rows });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.post('/api/events', async (req, res) => {
+    try {
+        const rsCount = await db.execute("SELECT COUNT(*) as count FROM events");
+        if (rsCount.rows[0].count >= 3) {
+            return res.status(400).json({ error: "No puedes agregar más de 3 eventos." });
+        }
+        
+        const { day, month, title, location } = req.body;
+        const rs = await db.execute({
+            sql: `INSERT INTO events (day, month, title, location) VALUES (?, ?, ?, ?)`,
+            args: [day, month, title, location]
+        });
+        res.json({ message: "success", id: Number(rs.lastInsertRowid) });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/api/events/:id', async (req, res) => {
+    try {
+        const rs = await db.execute({
+            sql: 'DELETE FROM events WHERE id = ?',
+            args: [req.params.id]
+        });
+        res.json({ message: "deleted", changes: rs.rowsAffected });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// --- RSS Cron API ---
+app.get('/api/cron/rss', async (req, res) => {
+    try {
+        const rs = await db.execute("SELECT key, value FROM settings WHERE key IN ('rss_url', 'rss_time')");
+        let rssUrl = '';
+        let rssTime = '';
+        rs.rows.forEach(r => {
+            if (r.key === 'rss_url') rssUrl = r.value;
+            if (r.key === 'rss_time') rssTime = r.value;
+        });
+
+        if (!rssUrl || !rssTime) {
+            return res.json({ message: "RSS not configured" });
+        }
+
+        const targetHour = parseInt(rssTime.split(':')[0], 10);
+        const d = new Date();
+        const currentHour = new Date(d.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
+
+        if (currentHour !== targetHour) {
+            return res.json({ message: `Not the right time. Current: ${currentHour}, Target: ${targetHour}` });
+        }
+
+        const parser = new Parser();
+        const feed = await parser.parseURL(rssUrl);
+        
+        if (feed.items && feed.items.length > 0) {
+            const item = feed.items[0];
+            const title = item.title || 'Noticia RSS';
+            const excerpt = item.contentSnippet ? item.contentSnippet.substring(0, 150) + '...' : 'Noticia automática';
+            const date = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+            
+            const check = await db.execute({
+                sql: "SELECT id FROM news WHERE title = ? LIMIT 1",
+                args: [title]
+            });
+            
+            if (check.rows.length === 0) {
+                await db.execute({
+                    sql: `INSERT INTO news (title, excerpt, date, image_url, is_main) VALUES (?, ?, ?, ?, ?)`,
+                    args: [title, excerpt, date, '', 0]
+                });
+                return res.json({ message: "success, news inserted" });
+            } else {
+                return res.json({ message: "success, news already exists" });
+            }
+        }
+        
+        res.json({ message: "success, no items found" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
     }
 });
 
