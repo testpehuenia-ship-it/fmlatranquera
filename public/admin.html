@@ -113,6 +113,28 @@
             <a href="/" class="text-secondary font-bold hover:underline">Volver al sitio</a>
         </div>
     </header>
+    <section class="max-w-container-max mx-auto px-margin-desktop py-10 border-b border-outline-variant">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+            <h2 class="font-headline-md text-primary">Mensajes y Pedidos Recibidos</h2>
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Desde</label>
+                    <input type="date" id="filter-start" class="bg-surface border-outline-variant rounded p-1 text-sm focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Hasta</label>
+                    <input type="date" id="filter-end" class="bg-surface border-outline-variant rounded p-1 text-sm focus:ring-secondary focus:border-secondary">
+                </div>
+                <button onclick="fetchMessages()" class="bg-secondary text-white font-label-sm px-4 py-2 rounded hover:bg-primary transition-all">FILTRAR</button>
+                <button onclick="deleteMessages()" class="bg-error text-on-error font-label-sm px-4 py-2 rounded hover:bg-red-800 transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">delete</span> ELIMINAR
+                </button>
+            </div>
+        </div>
+        <div id="messages-list" class="grid grid-cols-1 gap-2 max-h-[500px] overflow-y-auto">
+            <!-- Javascript will populate this -->
+        </div>
+    </section>
     <main class="max-w-container-max mx-auto px-margin-desktop py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
         <!-- Formulario -->
         <div>
@@ -207,28 +229,6 @@
             </div>
         </div>
     </main>
-    <section class="max-w-container-max mx-auto px-margin-desktop py-10 border-t border-outline-variant">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
-            <h2 class="font-headline-md text-primary">Mensajes y Pedidos Recibidos</h2>
-            <div class="flex flex-wrap gap-4 items-end">
-                <div>
-                    <label class="block font-label-sm mb-1 text-on-surface-variant">Desde</label>
-                    <input type="date" id="filter-start" class="bg-surface border-outline-variant rounded p-1 text-sm focus:ring-secondary focus:border-secondary">
-                </div>
-                <div>
-                    <label class="block font-label-sm mb-1 text-on-surface-variant">Hasta</label>
-                    <input type="date" id="filter-end" class="bg-surface border-outline-variant rounded p-1 text-sm focus:ring-secondary focus:border-secondary">
-                </div>
-                <button onclick="fetchMessages()" class="bg-secondary text-white font-label-sm px-4 py-2 rounded hover:bg-primary transition-all">FILTRAR</button>
-                <button onclick="deleteMessages()" class="bg-error text-on-error font-label-sm px-4 py-2 rounded hover:bg-red-800 transition-all flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">delete</span> ELIMINAR
-                </button>
-            </div>
-        </div>
-        <div id="messages-list" class="grid grid-cols-1 gap-2">
-            <!-- Javascript will populate this -->
-        </div>
-    </section>
     <script>
         async function fetchNews() {
             const res = await fetch('/api/news');
