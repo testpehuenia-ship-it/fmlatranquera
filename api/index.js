@@ -43,6 +43,14 @@ async function initDb() {
         key TEXT PRIMARY KEY,
         value TEXT
     )`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        location TEXT,
+        content TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        is_read INTEGER DEFAULT 0
+    )`);
   } catch (error) {
     console.error("Database initialization error:", error);
   }
@@ -146,6 +154,89 @@ app.delete('/api/news/:id', async (req, res) => {
         res.json({ "message": "deleted", changes: rs.rowsAffected });
     } catch (err) {
         res.status(400).json({ "error": err.message });
+    }
+});
+
+// --- Messages API ---
+
+app.post('/api/messages', async (req, res) => {
+    try {
+        const { name, location, content } = req.body;
+        const rs = await db.execute({
+            sql: `INSERT INTO messages (name, location, content) VALUES (?, ?, ?)`,
+            args: [name, location, content]
+        });
+        res.json({ message: "success", id: Number(rs.lastInsertRowid) });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        let sql = "SELECT * FROM messages";
+        let args = [];
+        
+        if (startDate && endDate) {
+            sql += " WHERE date(created_at) >= date(?) AND date(created_at) <= date(?)";
+            args = [startDate, endDate];
+        } else if (startDate) {
+            sql += " WHERE date(created_at) >= date(?)";
+            args = [startDate];
+        } else if (endDate) {
+            sql += " WHERE date(created_at) <= date(?)";
+            args = [endDate];
+        }
+        
+        sql += " ORDER BY id DESC";
+
+        const rs = await db.execute({ sql, args });
+        const data = rs.rows.map(row => ({
+            ...row,
+            is_read: row.is_read === 1
+        }));
+        res.json({ message: "success", data });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.patch('/api/messages/:id/read', async (req, res) => {
+    try {
+        const { is_read } = req.body;
+        const isReadInt = is_read ? 1 : 0;
+        await db.execute({
+            sql: `UPDATE messages SET is_read = ? WHERE id = ?`,
+            args: [isReadInt, req.params.id]
+        });
+        res.json({ message: "success" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/api/messages', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        let sql = "DELETE FROM messages";
+        let args = [];
+        
+        if (startDate && endDate) {
+            sql += " WHERE date(created_at) >= date(?) AND date(created_at) <= date(?)";
+            args = [startDate, endDate];
+        } else if (startDate) {
+            sql += " WHERE date(created_at) >= date(?)";
+            args = [startDate];
+        } else if (endDate) {
+            sql += " WHERE date(created_at) <= date(?)";
+            args = [endDate];
+        }
+        
+        const rs = await db.execute({ sql, args });
+        res.json({ message: "deleted", changes: rs.rowsAffected });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

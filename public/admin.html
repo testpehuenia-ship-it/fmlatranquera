@@ -163,6 +163,28 @@
             </div>
         </div>
     </main>
+    <section class="max-w-container-max mx-auto px-margin-desktop py-10 border-t border-outline-variant">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+            <h2 class="font-headline-md text-primary">Mensajes y Pedidos Recibidos</h2>
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Desde</label>
+                    <input type="date" id="filter-start" class="bg-surface border-outline-variant rounded p-1 text-sm focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Hasta</label>
+                    <input type="date" id="filter-end" class="bg-surface border-outline-variant rounded p-1 text-sm focus:ring-secondary focus:border-secondary">
+                </div>
+                <button onclick="fetchMessages()" class="bg-secondary text-white font-label-sm px-4 py-2 rounded hover:bg-primary transition-all">FILTRAR</button>
+                <button onclick="deleteMessages()" class="bg-error text-on-error font-label-sm px-4 py-2 rounded hover:bg-red-800 transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">delete</span> ELIMINAR
+                </button>
+            </div>
+        </div>
+        <div id="messages-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Javascript will populate this -->
+        </div>
+    </section>
     <script>
         async function fetchNews() {
             const res = await fetch('/api/news');
@@ -251,8 +273,77 @@
             }
         });
 
+        async function fetchMessages() {
+            const startDate = document.getElementById('filter-start').value;
+            const endDate = document.getElementById('filter-end').value;
+            let url = '/api/messages?';
+            if (startDate) url += `startDate=${startDate}&`;
+            if (endDate) url += `endDate=${endDate}`;
+            
+            const res = await fetch(url);
+            const data = await res.json();
+            const list = document.getElementById('messages-list');
+            list.innerHTML = '';
+            
+            if (!data.data || data.data.length === 0) {
+                list.innerHTML = '<p class="text-on-surface-variant col-span-2">No hay mensajes en este rango de fechas.</p>';
+            } else {
+                data.data.forEach(item => {
+                    const date = new Date(item.created_at).toLocaleString('es-AR');
+                    const div = document.createElement('div');
+                    div.className = `bg-surface-container-low p-4 rounded-lg rustic-border flex flex-col gap-2 transition-all ${item.is_read ? 'opacity-60 bg-surface-dim' : ''}`;
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start border-b border-outline-variant pb-2">
+                            <div>
+                                <h3 class="font-bold text-lg text-primary ${item.is_read ? 'line-through' : ''}">${item.name}</h3>
+                                <p class="font-label-sm text-secondary">${item.location}</p>
+                            </div>
+                            <p class="text-xs text-on-surface-variant">${date}</p>
+                        </div>
+                        <p class="font-body-md text-on-surface-variant my-2 whitespace-pre-wrap">${item.content}</p>
+                        <div class="mt-auto flex justify-end">
+                            <label class="flex items-center gap-2 cursor-pointer bg-surface-variant px-3 py-1 rounded-full border border-outline-variant hover:bg-outline-variant transition-colors">
+                                <input type="checkbox" ${item.is_read ? 'checked' : ''} onchange="toggleMessageStatus(${item.id}, this.checked)" class="rounded text-secondary focus:ring-secondary">
+                                <span class="font-label-sm text-on-surface-variant">${item.is_read ? 'Cumplido' : 'Marcar como cumplido'}</span>
+                            </label>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        async function toggleMessageStatus(id, isRead) {
+            await fetch('/api/messages/' + id + '/read', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_read: isRead })
+            });
+            fetchMessages();
+        }
+
+        async function deleteMessages() {
+            const startDate = document.getElementById('filter-start').value;
+            const endDate = document.getElementById('filter-end').value;
+            
+            let msg = '¿Seguro que deseas eliminar TODOS los mensajes? Esta acción no se puede deshacer.';
+            if (startDate || endDate) {
+                msg = '¿Seguro que deseas eliminar los mensajes en el rango de fechas seleccionado?';
+            }
+            
+            if(confirm(msg)) {
+                let url = '/api/messages?';
+                if (startDate) url += `startDate=${startDate}&`;
+                if (endDate) url += `endDate=${endDate}`;
+                
+                await fetch(url, { method: 'DELETE' });
+                fetchMessages();
+            }
+        }
+
         fetchNews();
         fetchSettings();
+        fetchMessages();
     </script>
 </body>
 </html>

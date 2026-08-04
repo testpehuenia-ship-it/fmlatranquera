@@ -361,21 +361,21 @@
 <p class="font-label-sm text-label-sm text-primary font-bold">+5.000 mensajes recibidos este mes</p>
 </div>
 </div>
-<form class="bg-surface p-10 rounded-xl rustic-border shadow-lg">
+<form id="contact-form" class="bg-surface p-10 rounded-xl rustic-border shadow-lg">
 <div class="space-y-6">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 <div>
 <label class="block font-label-sm text-label-sm mb-2">Nombre y Apellido</label>
-<input class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Juan Pérez" type="text"/>
+<input name="name" required class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Juan Pérez" type="text"/>
 </div>
 <div>
 <label class="block font-label-sm text-label-sm mb-2">Localidad</label>
-<input class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Paso de los Libres" type="text"/>
+<input name="location" required class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Paso de los Libres" type="text"/>
 </div>
 </div>
 <div>
 <label class="block font-label-sm text-label-sm mb-2">Tu pedido o mensaje</label>
-<textarea class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Mandale un saludo a la familia que estamos escuchando mientras mateamos..." rows="4"></textarea>
+<textarea name="content" required class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Mandale un saludo a la familia que estamos escuchando mientras mateamos..." rows="4"></textarea>
 </div>
 <button class="w-full bg-secondary text-white font-label-sm text-label-sm py-4 rounded hover:bg-primary transition-all border-b-4 border-primary" type="submit">
                             ENVIAR PEDIDO A ESTUDIO
@@ -446,6 +446,38 @@
                 });
             });
         });
+
+        const contactForm = document.getElementById('contact-form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = {
+                    name: formData.get('name'),
+                    location: formData.get('location'),
+                    content: formData.get('content')
+                };
+                
+                try {
+                    const res = await fetch('/api/messages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (res.ok) {
+                        alert('¡Mensaje enviado correctamente! Gracias por escribirnos.');
+                        e.target.reset();
+                    } else {
+                        alert('Hubo un error al enviar tu mensaje. Intenta nuevamente.');
+                    }
+                } catch (err) {
+                    alert('Hubo un error de conexión al enviar tu mensaje.');
+                }
+            });
+        }
     </script>
     <script>
         async function loadNews() {
