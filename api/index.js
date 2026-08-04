@@ -39,6 +39,10 @@ async function initDb() {
         image_url TEXT,
         is_main INTEGER DEFAULT 0
     )`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )`);
   } catch (error) {
     console.error("Database initialization error:", error);
   }
@@ -75,6 +79,33 @@ app.get('/api/news', async (req, res) => {
             "message": "success",
             "data": data
         });
+    } catch (err) {
+        res.status(400).json({ "error": err.message });
+    }
+});
+
+app.get('/api/settings', async (req, res) => {
+    try {
+        const rs = await db.execute("SELECT * FROM settings");
+        const data = {};
+        rs.rows.forEach(row => {
+            data[row.key] = row.value;
+        });
+        res.json({ "message": "success", "data": data });
+    } catch (err) {
+        res.status(400).json({ "error": err.message });
+    }
+});
+
+app.post('/api/settings', async (req, res) => {
+    try {
+        const { key, value } = req.body;
+        await db.execute({
+            sql: `INSERT INTO settings (key, value) VALUES (?, ?) 
+                  ON CONFLICT(key) DO UPDATE SET value=excluded.value`,
+            args: [key, value]
+        });
+        res.json({ "message": "success" });
     } catch (err) {
         res.status(400).json({ "error": err.message });
     }

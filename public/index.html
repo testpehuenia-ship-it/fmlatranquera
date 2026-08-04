@@ -275,19 +275,19 @@
 <aside class="lg:col-span-4 space-y-gutter">
 <!-- Weather Widget -->
 <div class="bg-surface-container-high p-8 rounded-lg rustic-border text-center">
-<h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-4">CLIMA LOCAL</h4>
+<h4 id="weather-location-label" class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-4 truncate" title="CLIMA LOCAL">CLIMA LOCAL</h4>
 <div class="flex flex-col items-center">
-<span class="material-symbols-outlined text-6xl text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">wb_sunny</span>
-<div class="text-5xl font-display-lg text-primary">22°C</div>
-<p class="font-body-md text-body-md font-bold mt-1">Despejado</p>
+<span id="weather-icon" class="material-symbols-outlined text-6xl text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">sync</span>
+<div id="weather-temp" class="text-5xl font-display-lg text-primary">--°C</div>
+<p id="weather-desc" class="font-body-md text-body-md font-bold mt-1">Cargando...</p>
 <div class="grid grid-cols-2 gap-4 w-full mt-6 pt-6 border-t border-outline-variant">
 <div>
 <p class="text-[10px] uppercase text-on-surface-variant font-label-sm">Humedad</p>
-<p class="font-headline-md text-lg">45%</p>
+<p id="weather-humidity" class="font-headline-md text-lg">--%</p>
 </div>
 <div>
 <p class="text-[10px] uppercase text-on-surface-variant font-label-sm">Viento</p>
-<p class="font-headline-md text-lg">12 km/h</p>
+<p id="weather-wind" class="font-headline-md text-lg">-- km/h</p>
 </div>
 </div>
 </div>
@@ -496,5 +496,62 @@
             }
         }
         loadNews();
+
+        async function loadWeather() {
+            try {
+                const settingsRes = await fetch('/api/settings');
+                const settingsData = await settingsRes.json();
+                const location = settingsData.data.weather_location || 'Buenos Aires, Argentina';
+                document.getElementById('weather-location-label').innerText = location.toUpperCase();
+
+                // Geocoding
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=es&format=json`);
+                const geoData = await geoRes.json();
+                
+                if (!geoData.results || geoData.results.length === 0) {
+                    document.getElementById('weather-desc').innerText = 'Ubicación no encontrada';
+                    return;
+                }
+                const { latitude, longitude } = geoData.results[0];
+
+                // Weather
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`);
+                const weatherData = await weatherRes.json();
+                const current = weatherData.current;
+
+                document.getElementById('weather-temp').innerText = `${Math.round(current.temperature_2m)}°C`;
+                document.getElementById('weather-humidity').innerText = `${current.relative_humidity_2m}%`;
+                document.getElementById('weather-wind').innerText = `${Math.round(current.wind_speed_10m)} km/h`;
+
+                // WMO Weather interpretation codes
+                const codes = {
+                    0: { desc: 'Despejado', icon: 'wb_sunny' },
+                    1: { desc: 'Mayormente despejado', icon: 'partly_cloudy_day' },
+                    2: { desc: 'Parcialmente nublado', icon: 'partly_cloudy_day' },
+                    3: { desc: 'Nublado', icon: 'cloud' },
+                    45: { desc: 'Niebla', icon: 'foggy' },
+                    48: { desc: 'Niebla escarcha', icon: 'foggy' },
+                    51: { desc: 'Llovizna ligera', icon: 'rainy' },
+                    53: { desc: 'Llovizna moderada', icon: 'rainy' },
+                    55: { desc: 'Llovizna densa', icon: 'rainy' },
+                    61: { desc: 'Lluvia leve', icon: 'rainy' },
+                    63: { desc: 'Lluvia moderada', icon: 'rainy' },
+                    65: { desc: 'Lluvia fuerte', icon: 'rainy' },
+                    71: { desc: 'Nieve leve', icon: 'weather_snowy' },
+                    73: { desc: 'Nieve moderada', icon: 'weather_snowy' },
+                    75: { desc: 'Nieve fuerte', icon: 'weather_snowy' },
+                    95: { desc: 'Tormenta', icon: 'thunderstorm' }
+                };
+                
+                const weather = codes[current.weather_code] || { desc: 'Variable', icon: 'cloud' };
+                document.getElementById('weather-desc').innerText = weather.desc;
+                document.getElementById('weather-icon').innerText = weather.icon;
+
+            } catch (err) {
+                console.error("Error loading weather:", err);
+                document.getElementById('weather-desc').innerText = 'No disponible';
+            }
+        }
+        loadWeather();
     </script>
 </body></html>

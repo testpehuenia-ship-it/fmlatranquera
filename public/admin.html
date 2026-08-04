@@ -117,7 +117,7 @@
         <!-- Formulario -->
         <div>
             <h2 class="font-headline-md mb-6 text-primary">Agregar Nueva Noticia</h2>
-            <form id="news-form" class="bg-surface-container-low p-6 rounded-lg rustic-border space-y-4">
+            <form id="news-form" class="bg-surface-container-low p-6 rounded-lg rustic-border space-y-4 mb-10">
                 <div>
                     <label class="block font-label-sm mb-1 text-on-surface-variant">Título</label>
                     <input type="text" name="title" required class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
@@ -139,6 +139,16 @@
                     <label for="is_main" class="font-label-sm text-on-surface-variant">Destacar como noticia principal</label>
                 </div>
                 <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">PUBLICAR NOTICIA</button>
+            </form>
+
+            <h2 class="font-headline-md mb-6 text-primary">Configuración del Clima</h2>
+            <form id="settings-form" class="bg-surface-container-low p-6 rounded-lg rustic-border space-y-4">
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Localidad para el pronóstico</label>
+                    <input type="text" name="weather_location" id="weather_location" placeholder="Ej: Villa Pehuenia, Neuquen" required class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                    <p class="text-xs text-on-surface-variant mt-1">Escribe la ciudad y provincia para obtener los datos más precisos.</p>
+                </div>
+                <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">GUARDAR CONFIGURACIÓN</button>
             </form>
         </div>
         <!-- Lista de noticias -->
@@ -203,7 +213,32 @@
             }
         });
 
+        async function fetchSettings() {
+            const res = await fetch('/api/settings');
+            const data = await res.json();
+            if (data.data.weather_location) {
+                document.getElementById('weather_location').value = data.data.weather_location;
+            }
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const location = document.getElementById('weather_location').value;
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'weather_location', value: location })
+            });
+
+            if (res.ok) {
+                alert('Configuración guardada exitosamente');
+            } else {
+                alert('Error al guardar la configuración');
+            }
+        });
+
         fetchNews();
+        fetchSettings();
     </script>
 </body>
 </html>
