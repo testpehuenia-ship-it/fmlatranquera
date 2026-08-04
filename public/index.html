@@ -259,11 +259,75 @@
 </div>
 </div>
 </section>
+
+<!-- Grilla Semanal Section -->
+<section class="bg-surface-container-low py-16 border-y border-outline-variant mt-10">
+    <div class="max-w-container-max mx-auto px-margin-desktop">
+        <h2 class="font-headline-md text-display-lg-mobile text-primary mb-8 text-center">Grilla de Programación</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Programa 1 -->
+            <div class="bg-surface rounded-xl rustic-border overflow-hidden shadow-md flex flex-col transition-transform hover:-translate-y-2">
+                <img src="/images/locutor_1.jpg" alt="Locutor 1" class="w-full h-56 object-cover object-top">
+                <div class="p-6">
+                    <p class="font-label-sm text-secondary mb-2">Lunes a Viernes • 06:00 - 09:00</p>
+                    <h3 class="font-headline-md text-primary mb-1">Mañanas de Campo</h3>
+                    <p class="font-body-sm text-on-surface-variant">Conduce: Héctor "El Paisa" Gómez</p>
+                </div>
+            </div>
+            <!-- Programa 2 -->
+            <div class="bg-surface rounded-xl rustic-border overflow-hidden shadow-md flex flex-col transition-transform hover:-translate-y-2">
+                <img src="/images/locutor_2.jpg" alt="Locutor 2" class="w-full h-56 object-cover object-top">
+                <div class="p-6">
+                    <p class="font-label-sm text-secondary mb-2">Lunes a Viernes • 15:00 - 18:00</p>
+                    <h3 class="font-headline-md text-primary mb-1">Mateando en la Tarde</h3>
+                    <p class="font-body-sm text-on-surface-variant">Conduce: Mariana Ríos</p>
+                </div>
+            </div>
+            <!-- Programa 3 -->
+            <div class="bg-surface rounded-xl rustic-border overflow-hidden shadow-md flex flex-col transition-transform hover:-translate-y-2">
+                <img src="/images/locutor_3.jpg" alt="Locutor 3" class="w-full h-56 object-cover object-top">
+                <div class="p-6">
+                    <p class="font-label-sm text-secondary mb-2">Sábados y Domingos • 09:00 - 13:00</p>
+                    <h3 class="font-headline-md text-primary mb-1">Tradición y Folklore</h3>
+                    <p class="font-body-sm text-on-surface-variant">Conduce: Don Anselmo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Main Content Layout -->
 <div class="max-w-container-max mx-auto px-margin-desktop py-20 grid grid-cols-1 lg:grid-cols-12 gap-gutter">
 <!-- Left Column: News Grid -->
 <div class="lg:col-span-8">
-<div class="flex items-center gap-4 mb-8">
+    
+    <!-- Contact Form -->
+    <div class="bg-surface-container-highest p-8 rounded-xl rustic-border mb-12 shadow-md relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-2 h-full bg-secondary"></div>
+        <h2 class="font-headline-md text-primary mb-6 ml-2">Comunicate con la Radio</h2>
+        <form id="contact-form" class="space-y-6 ml-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block font-label-sm text-label-sm mb-2 text-on-surface-variant">Nombre y Apellido</label>
+                    <input name="name" required class="w-full bg-surface border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Juan Pérez" type="text"/>
+                </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm mb-2 text-on-surface-variant">Localidad</label>
+                    <input name="location" required class="w-full bg-surface border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Paso de los Libres" type="text"/>
+                </div>
+            </div>
+            <div>
+                <label class="block font-label-sm text-label-sm mb-2 text-on-surface-variant">Tu pedido o mensaje</label>
+                <textarea name="content" required class="w-full bg-surface border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Mandale un saludo a la familia que estamos escuchando mientras mateamos..." rows="4"></textarea>
+            </div>
+            <button class="w-full bg-secondary text-white font-label-sm text-label-sm py-4 rounded hover:bg-primary transition-all border-b-4 border-primary" type="submit">
+                ENVIAR PEDIDO A ESTUDIO
+            </button>
+        </form>
+    </div>
+
+    <!-- News Section -->
+    <div class="flex items-center gap-4 mb-8">
 <h2 class="font-headline-md text-display-lg-mobile text-primary">Noticias del Campo</h2>
 <div class="h-px flex-grow bg-outline-variant relative"></div>
 </div>
@@ -328,33 +392,6 @@
 </div>
 </aside>
 </div>
-<!-- Order Form Section -->
-<section class="bg-surface-container-highest py-20 border-y border-outline-variant">
-<div class="max-w-2xl mx-auto px-margin-desktop">
-<h2 class="font-display-lg text-display-lg text-primary mb-8 text-center">Comunicate con la Radio</h2>
-<form id="contact-form" class="bg-surface p-10 rounded-xl rustic-border shadow-lg">
-<div class="space-y-6">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div>
-<label class="block font-label-sm text-label-sm mb-2">Nombre y Apellido</label>
-<input name="name" required class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Juan Pérez" type="text"/>
-</div>
-<div>
-<label class="block font-label-sm text-label-sm mb-2">Localidad</label>
-<input name="location" required class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Paso de los Libres" type="text"/>
-</div>
-</div>
-<div>
-<label class="block font-label-sm text-label-sm mb-2">Tu pedido o mensaje</label>
-<textarea name="content" required class="w-full bg-surface-container-low border-outline-variant rounded focus:ring-secondary focus:border-secondary transition-all pressed-effect" placeholder="Mandale un saludo a la familia que estamos escuchando mientras mateamos..." rows="4"></textarea>
-</div>
-<button class="w-full bg-secondary text-white font-label-sm text-label-sm py-4 rounded hover:bg-primary transition-all border-b-4 border-primary" type="submit">
-                            ENVIAR PEDIDO A ESTUDIO
-                        </button>
-</div>
-</form>
-</div>
-</section>
 </main>
 <!-- Footer -->
 <footer class="bg-surface-container-highest dark:bg-surface-container-lowest border-t border-outline-variant">

@@ -130,6 +130,11 @@ app.post('/api/settings', async (req, res) => {
 
 app.post('/api/news', upload.single('image'), async (req, res) => {
     try {
+        const rsCount = await db.execute("SELECT COUNT(*) as count FROM news");
+        if (rsCount.rows[0].count >= 3) {
+            return res.status(400).json({ error: "No puedes agregar más de 3 noticias." });
+        }
+
         const { title, excerpt, date, is_main } = req.body;
         let imageUrl = '';
         
@@ -141,7 +146,7 @@ app.post('/api/news', upload.single('image'), async (req, res) => {
         const isMainInt = is_main === '1' || is_main === 'true' || is_main === 1 ? 1 : 0;
         
         const rs = await db.execute({
-            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main) VALUES (?, ?, ?, ?, ?)`,
+            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto) VALUES (?, ?, ?, ?, ?, 0)`,
             args: [title, excerpt, date, imageUrl, isMainInt]
         });
         
@@ -317,6 +322,7 @@ app.delete('/api/events/:id', async (req, res) => {
 // --- RSS Cron API ---
 app.get('/api/cron/rss', async (req, res) => {
     try {
+        const force = req.query.force === 'true';
         const rs = await db.execute("SELECT key, value FROM settings WHERE key IN ('rss_url', 'rss_time', 'events_rss_url')");
         let rssUrl = '';
         let rssTime = '';
@@ -335,7 +341,7 @@ app.get('/api/cron/rss', async (req, res) => {
         const d = new Date();
         const currentHour = new Date(d.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })).getHours();
 
-        if (currentHour !== targetHour) {
+        if (currentHour !== targetHour && !force) {
             return res.json({ message: `Not the right time. Current: ${currentHour}, Target: ${targetHour}` });
         }
 
@@ -345,27 +351,42 @@ app.get('/api/cron/rss', async (req, res) => {
         // News RSS
         if (rssUrl) {
             try {
-                const feed = await parser.parseURL(rssUrl);
-                if (feed.items && feed.items.length > 0) {
-                    const item = feed.items[0];
-                    const title = item.title || 'Noticia RSS';
-                    const excerpt = item.contentSnippet ? item.contentSnippet.substring(0, 150) + '...' : 'Noticia automática';
-                    const date = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-                    
-                    const check = await db.execute({
-                        sql: "SELECT id FROM news WHERE title = ? LIMIT 1",
-                        args: [title]
-                    });
-                    
-                    if (check.rows.length === 0) {
+                await db.execute('DELETE FROM news WHERE is_auto = 1');
+                
+                const rsCountNews = await db.execute("SELECT COUNT(*) as count FROM news WHERE is_auto = 0");
+                const manualNewsCount = rsCountNews.rows[0].count;
+                const newsSpotsLeft = 3 - manualNewsCount;
+
+                if (newsSpotsLeft > 0) {
+                    const feed = await parser.parseURL(rssUrl);
+                    let inserted = 0;
+                    for (const item of feed.items) {
+                        if (inserted >= newsSpotsLeft) break;
+                        
+                        const title = (item.title || 'Noticia RSS').substring(0, 100);
+                        const excerpt = item.contentSnippet ? item.contentSnippet.substring(0, 150) + '...' : 'Noticia automática';
+                        const date = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+                        
+                        let imageUrl = '';
+                        if (item.enclosure && item.enclosure.url && item.enclosure.url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                            imageUrl = item.enclosure.url;
+                        } else if (item['content:encoded'] || item.content) {
+                            const content = item['content:encoded'] || item.content;
+                            const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
+                            if (imgMatch) {
+                                imageUrl = imgMatch[1];
+                            }
+                        }
+                        
                         await db.execute({
-                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main) VALUES (?, ?, ?, ?, ?)`,
-                            args: [title, excerpt, date, '', 0]
+                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto) VALUES (?, ?, ?, ?, 0, 1)`,
+                            args: [title, excerpt, date, imageUrl]
                         });
-                        logs.push("News inserted");
-                    } else {
-                        logs.push("News already exists");
+                        inserted++;
                     }
+                    logs.push(`Inserted ${inserted} auto news`);
+                } else {
+                    logs.push("No spots left for auto news");
                 }
             } catch (err) {
                 logs.push(`Error in news RSS: ${err.message}`);

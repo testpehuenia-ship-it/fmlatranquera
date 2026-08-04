@@ -139,7 +139,7 @@
                     <label for="is_main" class="font-label-sm text-on-surface-variant">Destacar como noticia principal</label>
                 </div>
                 <input type="hidden" name="news_id" id="news_id">
-                <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all"><span id="news-form-btn-text">PUBLICAR NOTICIA</span></button>
+                <button type="submit" id="btn-submit-news" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all"><span id="news-form-btn-text">PUBLICAR NOTICIA</span></button>
             </form>
 
             <h2 class="font-headline-md mb-6 text-primary">Configuración General</h2>
@@ -165,7 +165,10 @@
                     <label class="block font-label-sm mb-1 text-on-surface-variant">Hora de actualización (0-23)</label>
                     <input type="time" name="rss_time" id="rss_time" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
                 </div>
-                <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">GUARDAR CONFIGURACIÓN</button>
+                <div class="flex gap-4 mt-4">
+                    <button type="submit" class="flex-1 bg-secondary text-white font-label-sm py-3 rounded hover:bg-primary transition-all">GUARDAR CONFIGURACIÓN</button>
+                    <button type="button" onclick="forceRssUpdate()" class="flex-1 bg-tertiary text-on-tertiary font-label-sm py-3 rounded hover:bg-primary transition-all">FORZAR ACTUALIZACIÓN RSS</button>
+                </div>
             </form>
 
             <h2 class="font-headline-md mb-6 text-primary mt-10">Agregar Evento Manual (Máx 3)</h2>
@@ -231,10 +234,22 @@
             const res = await fetch('/api/news');
             const data = await res.json();
             const list = document.getElementById('news-list');
+            const btnSubmit = document.getElementById('btn-submit-news');
+            const btnText = document.getElementById('news-form-btn-text');
             list.innerHTML = '';
             
             if (data.data.length === 0) {
                 list.innerHTML = '<p class="text-on-surface-variant">No hay noticias publicadas.</p>';
+            }
+
+            if (data.data.length >= 3) {
+                btnSubmit.disabled = true;
+                btnText.innerText = 'LÍMITE ALCANZADO (3 MÁX)';
+                btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btnSubmit.disabled = false;
+                btnText.innerText = document.getElementById('news_id') && document.getElementById('news_id').value ? 'ACTUALIZAR NOTICIA' : 'PUBLICAR NOTICIA';
+                btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
             }
 
             data.data.forEach(item => {
@@ -246,7 +261,7 @@
                         ${item.image_url ? `<img src="${item.image_url}" class="w-16 h-16 object-cover rounded">` : ''}
                         <div>
                             <p class="font-label-sm text-secondary">${item.date}</p>
-                            <h3 class="font-bold text-lg">${item.title} ${item.is_main ? '⭐' : ''}</h3>
+                            <h3 class="font-bold text-lg">${item.title} ${item.is_main ? '⭐' : ''} ${item.is_auto ? '<span class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full ml-2 align-middle">🤖 Auto</span>' : ''}</h3>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -492,6 +507,16 @@
         fetchSettings();
         fetchEvents();
         fetchMessages();
+        async function forceRssUpdate() {
+            if(confirm('¿Forzar la actualización ahora? Esto buscará nuevas noticias y eventos.')) {
+                const res = await fetch('/api/cron/rss?force=true');
+                const result = await res.json();
+                console.log(result.logs);
+                alert('Actualización RSS completada.\n' + (result.logs ? result.logs.join('\n') : result.message));
+                fetchNews();
+                fetchEvents();
+            }
+        }
     </script>
 </body>
 </html>
