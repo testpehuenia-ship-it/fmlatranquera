@@ -138,7 +138,8 @@
                     <input type="checkbox" name="is_main" id="is_main" class="rounded text-secondary focus:ring-secondary">
                     <label for="is_main" class="font-label-sm text-on-surface-variant">Destacar como noticia principal</label>
                 </div>
-                <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">PUBLICAR NOTICIA</button>
+                <input type="hidden" name="news_id" id="news_id">
+                <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all"><span id="news-form-btn-text">PUBLICAR NOTICIA</span></button>
             </form>
 
             <h2 class="font-headline-md mb-6 text-primary">Configuración General</h2>
@@ -152,13 +153,53 @@
                     <label class="block font-label-sm mb-1 text-on-surface-variant">URL del Streaming de Radio</label>
                     <input type="url" name="stream_url" id="stream_url" placeholder="Ej: https://stream.radio.com/audio" required class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
                 </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">URL del RSS (Noticias)</label>
+                    <input type="url" name="rss_url" id="rss_url" placeholder="Ej: https://www.clarin.com/rss/lo-ultimo/" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">URL del RSS (Eventos Automáticos)</label>
+                    <input type="url" name="events_rss_url" id="events_rss_url" placeholder="Ej: https://misitio.com/eventos/rss" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Hora de actualización (0-23)</label>
+                    <input type="time" name="rss_time" id="rss_time" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
                 <button type="submit" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">GUARDAR CONFIGURACIÓN</button>
+            </form>
+
+            <h2 class="font-headline-md mb-6 text-primary mt-10">Agregar Evento Manual (Máx 3)</h2>
+            <form id="events-form" class="bg-surface-container-low p-6 rounded-lg rustic-border space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-label-sm mb-1 text-on-surface-variant">Día</label>
+                        <input type="number" name="day" required min="1" max="31" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                    </div>
+                    <div>
+                        <label class="block font-label-sm mb-1 text-on-surface-variant">Mes</label>
+                        <input type="text" name="month" required maxlength="3" placeholder="OCT" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary uppercase">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Título</label>
+                    <input type="text" name="title" required maxlength="50" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block font-label-sm mb-1 text-on-surface-variant">Ubicación / Descripción Corta</label>
+                    <input type="text" name="location" required maxlength="60" placeholder="Máx 60 caracteres" class="w-full bg-surface border-outline-variant rounded p-2 focus:ring-secondary focus:border-secondary">
+                </div>
+                <button type="submit" id="btn-add-event" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">AGREGAR EVENTO</button>
             </form>
         </div>
         <!-- Lista de noticias -->
         <div>
             <h2 class="font-headline-md mb-6 text-primary">Noticias Publicadas</h2>
-            <div id="news-list" class="space-y-4">
+            <div id="news-list" class="space-y-4 mb-10">
+                <!-- Javascript will populate this -->
+            </div>
+
+            <h2 class="font-headline-md mb-6 text-primary">Próximos Eventos</h2>
+            <div id="events-list" class="space-y-4">
                 <!-- Javascript will populate this -->
             </div>
         </div>
@@ -279,7 +320,12 @@
                 document.getElementById('rss_url').value = data.data.rss_url;
             }
             if (data.data.rss_time) {
-                document.getElementById('rss_time').value = data.data.rss_time;
+                const el = document.getElementById('rss_time');
+                if(el) el.value = data.data.rss_time;
+            }
+            if (data.data.events_rss_url) {
+                const el = document.getElementById('events_rss_url');
+                if(el) el.value = data.data.events_rss_url;
             }
         }
 
@@ -287,14 +333,16 @@
             e.preventDefault();
             const location = document.getElementById('weather_location').value;
             const streamUrl = document.getElementById('stream_url').value;
-            const rssUrl = document.getElementById('rss_url').value;
-            const rssTime = document.getElementById('rss_time').value;
+            const rssUrl = document.getElementById('rss_url') ? document.getElementById('rss_url').value : '';
+            const rssTime = document.getElementById('rss_time') ? document.getElementById('rss_time').value : '';
+            const eventsRssUrl = document.getElementById('events_rss_url') ? document.getElementById('events_rss_url').value : '';
             
             const reqs = [
                 fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'weather_location', value: location }) }),
                 fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'stream_url', value: streamUrl }) }),
                 fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rss_url', value: rssUrl }) }),
-                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rss_time', value: rssTime }) })
+                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rss_time', value: rssTime }) }),
+                fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'events_rss_url', value: eventsRssUrl }) })
             ];
             
             await Promise.all(reqs);
@@ -332,7 +380,7 @@
                             <p class="text-[10px] uppercase">${item.month}</p>
                         </div>
                         <div>
-                            <h3 class="font-bold text-lg text-primary">${item.title}</h3>
+                            <h3 class="font-bold text-lg text-primary">${item.title} ${item.is_auto ? '<span class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full ml-2 align-middle">🤖 Auto</span>' : ''}</h3>
                             <p class="font-label-sm text-secondary">${item.location}</p>
                         </div>
                     </div>

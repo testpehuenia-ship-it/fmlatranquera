@@ -293,7 +293,7 @@ app.post('/api/events', async (req, res) => {
         
         const { day, month, title, location } = req.body;
         const rs = await db.execute({
-            sql: `INSERT INTO events (day, month, title, location) VALUES (?, ?, ?, ?)`,
+            sql: `INSERT INTO events (day, month, title, location, is_auto) VALUES (?, ?, ?, ?, 0)`,
             args: [day, month, title, location]
         });
         res.json({ message: "success", id: Number(rs.lastInsertRowid) });
@@ -317,16 +317,18 @@ app.delete('/api/events/:id', async (req, res) => {
 // --- RSS Cron API ---
 app.get('/api/cron/rss', async (req, res) => {
     try {
-        const rs = await db.execute("SELECT key, value FROM settings WHERE key IN ('rss_url', 'rss_time')");
+        const rs = await db.execute("SELECT key, value FROM settings WHERE key IN ('rss_url', 'rss_time', 'events_rss_url')");
         let rssUrl = '';
         let rssTime = '';
+        let eventsRssUrl = '';
         rs.rows.forEach(r => {
             if (r.key === 'rss_url') rssUrl = r.value;
             if (r.key === 'rss_time') rssTime = r.value;
+            if (r.key === 'events_rss_url') eventsRssUrl = r.value;
         });
 
-        if (!rssUrl || !rssTime) {
-            return res.json({ message: "RSS not configured" });
+        if (!rssTime) {
+            return res.json({ message: "RSS time not configured" });
         }
 
         const targetHour = parseInt(rssTime.split(':')[0], 10);
@@ -338,31 +340,75 @@ app.get('/api/cron/rss', async (req, res) => {
         }
 
         const parser = new Parser();
-        const feed = await parser.parseURL(rssUrl);
-        
-        if (feed.items && feed.items.length > 0) {
-            const item = feed.items[0];
-            const title = item.title || 'Noticia RSS';
-            const excerpt = item.contentSnippet ? item.contentSnippet.substring(0, 150) + '...' : 'Noticia automática';
-            const date = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-            
-            const check = await db.execute({
-                sql: "SELECT id FROM news WHERE title = ? LIMIT 1",
-                args: [title]
-            });
-            
-            if (check.rows.length === 0) {
-                await db.execute({
-                    sql: `INSERT INTO news (title, excerpt, date, image_url, is_main) VALUES (?, ?, ?, ?, ?)`,
-                    args: [title, excerpt, date, '', 0]
-                });
-                return res.json({ message: "success, news inserted" });
-            } else {
-                return res.json({ message: "success, news already exists" });
+        let logs = [];
+
+        // News RSS
+        if (rssUrl) {
+            try {
+                const feed = await parser.parseURL(rssUrl);
+                if (feed.items && feed.items.length > 0) {
+                    const item = feed.items[0];
+                    const title = item.title || 'Noticia RSS';
+                    const excerpt = item.contentSnippet ? item.contentSnippet.substring(0, 150) + '...' : 'Noticia automática';
+                    const date = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+                    
+                    const check = await db.execute({
+                        sql: "SELECT id FROM news WHERE title = ? LIMIT 1",
+                        args: [title]
+                    });
+                    
+                    if (check.rows.length === 0) {
+                        await db.execute({
+                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main) VALUES (?, ?, ?, ?, ?)`,
+                            args: [title, excerpt, date, '', 0]
+                        });
+                        logs.push("News inserted");
+                    } else {
+                        logs.push("News already exists");
+                    }
+                }
+            } catch (err) {
+                logs.push(`Error in news RSS: ${err.message}`);
             }
         }
-        
-        res.json({ message: "success, no items found" });
+
+        // Events RSS
+        if (eventsRssUrl) {
+            try {
+                await db.execute('DELETE FROM events WHERE is_auto = 1');
+                
+                const rsCount = await db.execute("SELECT COUNT(*) as count FROM events WHERE is_auto = 0");
+                const manualCount = rsCount.rows[0].count;
+                const spotsLeft = 3 - manualCount;
+
+                if (spotsLeft > 0) {
+                    const eFeed = await parser.parseURL(eventsRssUrl);
+                    let inserted = 0;
+                    for (const item of eFeed.items) {
+                        if (inserted >= spotsLeft) break;
+                        const pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
+                        const dayStr = pubDate.getDate().toString();
+                        const monthStr = pubDate.toLocaleString('es-AR', { month: 'short' }).substring(0, 3).toUpperCase();
+                        
+                        const title = (item.title || 'Evento Automático').substring(0, 50);
+                        const location = (item.contentSnippet || 'Evento RSS').substring(0, 60);
+
+                        await db.execute({
+                            sql: `INSERT INTO events (day, month, title, location, is_auto) VALUES (?, ?, ?, ?, 1)`,
+                            args: [dayStr, monthStr, title, location]
+                        });
+                        inserted++;
+                    }
+                    logs.push(`Inserted ${inserted} auto events`);
+                } else {
+                    logs.push("No spots left for auto events");
+                }
+            } catch (err) {
+                logs.push(`Error in events RSS: ${err.message}`);
+            }
+        }
+
+        res.json({ message: "cron completed", logs });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
