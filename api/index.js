@@ -91,7 +91,7 @@ const uploadToCloudinary = (buffer) => {
 const uploadToCloudinaryWebP = (buffer) => {
   return new Promise((resolve, reject) => {
       let cld_upload_stream = cloudinary.uploader.upload_stream(
-        { folder: "fmlatranquera", format: "webp" },
+        { folder: "fmlatranquera", format: "webp", resource_type: "auto" },
         (error, result) => {
            if (result) {
              resolve(result);

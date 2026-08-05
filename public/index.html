@@ -688,7 +688,12 @@
                     data.data.forEach(ad => {
                         const slotContainer = document.getElementById('ad-slot-' + ad.slot);
                         if (slotContainer) {
-                            let content = \`<img src="\${ad.image_url}" class="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition-opacity object-cover">\`;
+                            const isVideo = ad.image_url.match(/\.(mp4|webm|ogg)$/i);
+                            let mediaHtml = isVideo 
+                                ? \`<video src="\${ad.image_url}" class="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition-opacity object-cover" autoplay loop muted playsinline></video>\`
+                                : \`<img src="\${ad.image_url}" class="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition-opacity object-cover">\`;
+                                
+                            let content = mediaHtml;
                             if (ad.link_url) {
                                 content = \`<a href="\${ad.link_url}" target="_blank" rel="noopener noreferrer" class="block w-full">\${content}</a>\`;
                             }

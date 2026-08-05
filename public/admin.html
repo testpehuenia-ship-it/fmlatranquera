@@ -261,9 +261,14 @@
                 const ad = adsMap[i];
                 let adHtml = '';
                 if (ad) {
+                    const isVideo = ad.image_url.match(/\.(mp4|webm|ogg)$/i);
+                    const mediaHtml = isVideo
+                        ? \`<video src="\${ad.image_url}" class="max-w-full max-h-full object-contain" autoplay loop muted playsinline></video>\`
+                        : \`<img src="\${ad.image_url}" class="max-w-full max-h-full object-contain">\`;
+                        
                     adHtml = `
                         <div class="relative w-full h-32 mb-4 bg-surface-dim rounded overflow-hidden flex items-center justify-center">
-                            <img src="${ad.image_url}" class="max-w-full max-h-full object-contain">
+                            \${mediaHtml}
                         </div>
                         <button type="button" onclick="deleteAd(${i})" class="w-full bg-error text-on-error font-label-sm py-2 rounded mb-2 hover:bg-red-800 transition-all flex items-center justify-center gap-1">
                             <span class="material-symbols-outlined text-sm">delete</span> ELIMINAR BANNER
@@ -284,7 +289,7 @@
                         ${adHtml}
                         <form onsubmit="uploadAd(event, ${i})" class="mt-auto flex flex-col gap-2">
                             <input type="url" name="link_url" placeholder="URL destino (opcional)" value="${ad ? ad.link_url : ''}" class="w-full bg-surface border-outline-variant rounded p-2 text-xs focus:ring-secondary focus:border-secondary">
-                            <input type="file" name="image" accept="image/*,image/gif" required class="w-full text-xs">
+                            <input type="file" name="image" accept="image/*,image/gif,video/mp4,image/webp" required class="w-full text-xs">
                             <button type="submit" class="w-full bg-secondary text-white font-label-sm py-2 rounded hover:bg-primary transition-all">SUBIR BANNER</button>
                         </form>
                     </div>
