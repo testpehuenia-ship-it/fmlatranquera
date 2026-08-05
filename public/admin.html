@@ -261,14 +261,14 @@
                 const ad = adsMap[i];
                 let adHtml = '';
                 if (ad) {
-                    const isVideo = ad.image_url.match(/\.(mp4|webm|ogg)$/i);
+                    const isVideo = ad.image_url && ad.image_url.match(/\.(mp4|webm|ogg)$/i);
                     const mediaHtml = isVideo
-                        ? \`<video src="\${ad.image_url}" class="max-w-full max-h-full object-contain" autoplay loop muted playsinline></video>\`
-                        : \`<img src="\${ad.image_url}" class="max-w-full max-h-full object-contain">\`;
+                        ? `<video src="${ad.image_url}" class="max-w-full max-h-full object-contain" autoplay loop muted playsinline></video>`
+                        : `<img src="${ad.image_url}" class="max-w-full max-h-full object-contain">`;
                         
                     adHtml = `
                         <div class="relative w-full h-32 mb-4 bg-surface-dim rounded overflow-hidden flex items-center justify-center">
-                            \${mediaHtml}
+                            ${mediaHtml}
                         </div>
                         <button type="button" onclick="deleteAd(${i})" class="w-full bg-error text-on-error font-label-sm py-2 rounded mb-2 hover:bg-red-800 transition-all flex items-center justify-center gap-1">
                             <span class="material-symbols-outlined text-sm">delete</span> ELIMINAR BANNER
