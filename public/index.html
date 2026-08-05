@@ -509,10 +509,28 @@
                     container.innerHTML = '<p class="col-span-2 text-on-surface-variant p-4">No hay noticias publicadas todavía.</p>';
                     return;
                 }
+                
+                // Asegurar que haya una noticia principal
+                let hasMain = data.data.some(item => item.is_main);
+                if (!hasMain && data.data.length > 0) {
+                    data.data[0].is_main = true;
+                }
+                
+                // Ordenar: Principal primero, luego el resto
+                data.data.sort((a, b) => {
+                    if (a.is_main && !b.is_main) return -1;
+                    if (!a.is_main && b.is_main) return 1;
+                    return 0;
+                });
 
+                let htmlContent = '';
                 data.data.forEach(item => {
+                    const linkUrl = item.link_url || '#';
+                    const targetAttr = item.is_auto ? 'target="_blank" rel="noopener noreferrer"' : '';
+                    const linkText = item.is_auto ? 'Seguir leyendo en origen' : 'Leer nota completa';
+                    
                     if (item.is_main) {
-                        container.innerHTML += `
+                        htmlContent += `
                             <article class="md:col-span-2 bg-surface-container-low rustic-border overflow-hidden rounded-lg group">
                                 <div class="relative overflow-hidden aspect-[16/9]">
                                     <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${item.image_url || 'https://via.placeholder.com/800x450?text=Noticia'}"/>
@@ -522,12 +540,12 @@
                                     <p class="font-label-sm text-label-sm text-secondary mb-2">${item.date}</p>
                                     <h3 class="font-headline-md text-headline-md mb-3 hover:text-secondary cursor-pointer transition-colors">${item.title}</h3>
                                     <p class="font-body-md text-body-md text-on-surface-variant mb-6">${item.excerpt}</p>
-                                    <a class="font-label-sm text-label-sm text-primary font-bold flex items-center gap-2 hover:translate-x-2 transition-transform" href="#">Leer nota completa <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+                                    <a class="font-label-sm text-label-sm text-primary font-bold flex items-center gap-2 hover:translate-x-2 transition-transform" href="${linkUrl}" ${targetAttr}>${linkText} <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
                                 </div>
                             </article>
                         `;
                     } else {
-                        container.innerHTML += `
+                        htmlContent += `
                             <article class="bg-surface-container-low rustic-border overflow-hidden rounded-lg group">
                                 <div class="relative overflow-hidden h-64">
                                     <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${item.image_url || 'https://via.placeholder.com/400x300?text=Noticia'}"/>
@@ -536,11 +554,13 @@
                                     <p class="font-label-sm text-label-sm text-secondary mb-2">${item.date}</p>
                                     <h3 class="font-headline-md text-xl mb-3 hover:text-secondary cursor-pointer transition-colors">${item.title}</h3>
                                     <p class="font-body-md text-on-surface-variant line-clamp-3">${item.excerpt}</p>
+                                    <a class="font-label-sm text-label-sm text-primary font-bold flex items-center gap-2 hover:translate-x-2 transition-transform mt-4" href="${linkUrl}" ${targetAttr}>${linkText} <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
                                 </div>
                             </article>
                         `;
                     }
                 });
+                container.innerHTML = htmlContent;
             } catch (err) {
                 console.error("Error loading news:", err);
             }

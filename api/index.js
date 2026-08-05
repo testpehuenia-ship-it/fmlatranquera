@@ -63,6 +63,8 @@ async function initDb() {
         image_url TEXT,
         link_url TEXT
     )`);
+    try { await db.execute('ALTER TABLE news ADD COLUMN is_auto INTEGER DEFAULT 0'); } catch(e) {}
+    try { await db.execute('ALTER TABLE news ADD COLUMN link_url TEXT'); } catch(e) {}
     // Update existing news to JULIO 2026 for demo
     await db.execute(`UPDATE news SET date = 'JULIO 2026' WHERE date != 'JULIO 2026'`);
   } catch (error) {
@@ -427,10 +429,11 @@ app.get('/api/cron/rss', async (req, res) => {
                             }
                         }
                         
+                        const linkUrl = item.link || '#';
                         const isMain = inserted === 0 ? 1 : 0;
                         await db.execute({
-                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto) VALUES (?, ?, ?, ?, ?, 1)`,
-                            args: [title, excerpt, date, imageUrl, isMain]
+                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto, link_url) VALUES (?, ?, ?, ?, ?, 1, ?)`,
+                            args: [title, excerpt, date, imageUrl, isMain, linkUrl]
                         });
                         inserted++;
                     }
