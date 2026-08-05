@@ -193,6 +193,20 @@
                 </div>
             </form>
 
+
+        </div>
+        <!-- Lista de noticias -->
+        <div>
+            <h2 class="font-headline-md mb-6 text-primary">Noticias Publicadas</h2>
+            <div id="news-list" class="space-y-4 mb-10">
+                <!-- Javascript will populate this -->
+            </div>
+
+            <h2 class="font-headline-md mb-6 text-primary">Próximos Eventos</h2>
+            <div id="events-list" class="space-y-4">
+                <!-- Javascript will populate this -->
+            </div>
+            
             <h2 class="font-headline-md mb-6 text-primary mt-10">Agregar Evento Manual (Máx 3)</h2>
             <form id="events-form" class="bg-surface-container-low p-6 rounded-lg rustic-border space-y-4">
                 <div class="grid grid-cols-2 gap-4">
@@ -215,18 +229,6 @@
                 </div>
                 <button type="submit" id="btn-add-event" class="w-full bg-secondary text-white font-label-sm py-3 rounded mt-4 hover:bg-primary transition-all">AGREGAR EVENTO</button>
             </form>
-        </div>
-        <!-- Lista de noticias -->
-        <div>
-            <h2 class="font-headline-md mb-6 text-primary">Noticias Publicadas</h2>
-            <div id="news-list" class="space-y-4 mb-10">
-                <!-- Javascript will populate this -->
-            </div>
-
-            <h2 class="font-headline-md mb-6 text-primary">Próximos Eventos</h2>
-            <div id="events-list" class="space-y-4">
-                <!-- Javascript will populate this -->
-            </div>
         </div>
     </main>
     <section class="max-w-container-max mx-auto px-margin-desktop py-10 border-t border-outline-variant">
@@ -369,6 +371,7 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
+                        <button onclick="setMainNews(${item.id})" class="${item.is_main ? 'text-yellow-600 bg-yellow-100' : 'text-on-surface-variant bg-surface-variant hover:text-yellow-600 hover:bg-yellow-100'} p-2 rounded material-symbols-outlined transition-colors" title="Marcar como Noticia Principal">star</button>
                         <button onclick="editNews('${itemJson}')" class="text-secondary hover:text-primary bg-secondary-container p-2 rounded material-symbols-outlined transition-colors">edit</button>
                         <button onclick="deleteNews(${item.id})" class="text-error hover:text-red-700 bg-error-container p-2 rounded material-symbols-outlined transition-colors">delete</button>
                     </div>
@@ -393,6 +396,15 @@
             if(confirm('¿Seguro que deseas eliminar esta noticia?')) {
                 await fetch('/api/news/' + id, { method: 'DELETE' });
                 fetchNews();
+            }
+        }
+        
+        async function setMainNews(id) {
+            try {
+                await fetch('/api/news/' + id + '/main', { method: 'PATCH' });
+                fetchNews();
+            } catch (err) {
+                console.error(err);
             }
         }
 

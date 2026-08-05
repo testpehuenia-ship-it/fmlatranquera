@@ -149,6 +149,19 @@ app.post('/api/settings', async (req, res) => {
     }
 });
 
+app.patch('/api/news/:id/main', async (req, res) => {
+    try {
+        await db.execute("UPDATE news SET is_main = 0");
+        await db.execute({
+            sql: "UPDATE news SET is_main = 1 WHERE id = ?",
+            args: [req.params.id]
+        });
+        res.json({ message: "success" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 app.post('/api/news', upload.single('image'), async (req, res) => {
     try {
         const rsCount = await db.execute("SELECT COUNT(*) as count FROM news");
@@ -369,6 +382,12 @@ app.get('/api/cron/rss', async (req, res) => {
         const parser = new Parser({
             requestOptions: {
                 rejectUnauthorized: false
+            },
+            customFields: {
+                item: [
+                    ['media:content', 'mediaContent', {keepArray: true}],
+                    ['content:encoded', 'contentEncoded']
+                ]
             }
         });
         let logs = [];
@@ -385,6 +404,9 @@ app.get('/api/cron/rss', async (req, res) => {
                 if (newsSpotsLeft > 0) {
                     const feed = await parser.parseURL(rssUrl);
                     let inserted = 0;
+                    if (feed.items && feed.items.length > 0) {
+                        await db.execute('UPDATE news SET is_main = 0');
+                    }
                     for (const item of feed.items) {
                         if (inserted >= newsSpotsLeft) break;
                         
@@ -393,19 +415,22 @@ app.get('/api/cron/rss', async (req, res) => {
                         const date = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
                         
                         let imageUrl = '';
-                        if (item.enclosure && item.enclosure.url && item.enclosure.url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                        if (item.enclosure && item.enclosure.url && (item.enclosure.type && item.enclosure.type.startsWith('image/') || item.enclosure.url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i))) {
                             imageUrl = item.enclosure.url;
-                        } else if (item['content:encoded'] || item.content) {
-                            const content = item['content:encoded'] || item.content;
-                            const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
+                        } else if (item.mediaContent && item.mediaContent.length > 0 && item.mediaContent[0].$) {
+                            imageUrl = item.mediaContent[0].$.url;
+                        } else if (item.contentEncoded || item.content) {
+                            const content = item.contentEncoded || item.content;
+                            const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
                             if (imgMatch) {
                                 imageUrl = imgMatch[1];
                             }
                         }
                         
+                        const isMain = inserted === 0 ? 1 : 0;
                         await db.execute({
-                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto) VALUES (?, ?, ?, ?, 0, 1)`,
-                            args: [title, excerpt, date, imageUrl]
+                            sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto) VALUES (?, ?, ?, ?, ?, 1)`,
+                            args: [title, excerpt, date, imageUrl, isMain]
                         });
                         inserted++;
                     }
