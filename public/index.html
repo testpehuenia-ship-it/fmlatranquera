@@ -160,24 +160,38 @@
 <body class="bg-surface selection:bg-secondary-container selection:text-on-secondary-container">
 <!-- TopNavBar -->
 <header class="bg-surface dark:bg-surface-dim border-b border-outline-variant fixed top-0 w-full z-50">
-<div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-20">
-<div class="flex items-center gap-4">
-<img alt="FM La Tranquera Logo" class="h-16 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkeUDaXIC99aZBOwwZi-96MBXon8kjo1opRV25PfaM-2id7H3Mr59yXm6OhqCDXjMGxvkTEa87p_Qjs6sxp8r_0Rjrr2CYGjiowd8foKgsfb4aRLAcdJW7VL0kWZSDnLKe1veVEWVhu3AT88lpl0GFVwWLT9u2Wx5pXJqEcuf6EkGMz4-SbVBf4KeEoYZv3K2moa2HNUiJ_sSiAMvxsvMU_JFh3iPidca2HdliWYrShbtLU-Fl-ezeSg"/>
-<span class="block font-display-lg text-display-lg text-primary dark:text-primary-fixed tracking-tight leading-none text-xl md:text-2xl lg:text-3xl">FM LA TRANQUERA</span>
-</div>
-<nav class="hidden md:flex items-center gap-base">
-<a class="font-label-sm text-label-sm text-secondary font-bold border-b-2 border-secondary pb-1 px-3 transition-colors hover:text-primary" href="#inicio">Inicio</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#grilla">Grilla</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#noticias">Noticias</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#pedidos">Pedidos</a>
-</nav>
-<div class="flex items-center gap-4">
-<button id="top-play-btn" class="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2 group">
-<span class="material-symbols-outlined group-hover:scale-110 transition-transform">play_circle</span>
-                    Escuchar En Vivo
-                </button>
-</div>
-</div>
+    <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-20">
+        <div class="flex items-center gap-2 md:gap-4 truncate">
+            <img alt="FM La Tranquera Logo" class="h-12 md:h-16 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkeUDaXIC99aZBOwwZi-96MBXon8kjo1opRV25PfaM-2id7H3Mr59yXm6OhqCDXjMGxvkTEa87p_Qjs6sxp8r_0Rjrr2CYGjiowd8foKgsfb4aRLAcdJW7VL0kWZSDnLKe1veVEWVhu3AT88lpl0GFVwWLT9u2Wx5pXJqEcuf6EkGMz4-SbVBf4KeEoYZv3K2moa2HNUiJ_sSiAMvxsvMU_JFh3iPidca2HdliWYrShbtLU-Fl-ezeSg"/>
+            <span class="block font-display-lg text-display-lg text-primary dark:text-primary-fixed tracking-tight leading-none text-[1.1rem] sm:text-xl md:text-2xl lg:text-3xl truncate">FM LA TRANQUERA</span>
+        </div>
+        
+        <button class="md:hidden p-2 text-primary material-symbols-outlined" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">menu</button>
+        
+        <div class="hidden md:flex items-center gap-4">
+            <nav class="flex items-center gap-base">
+                <a class="font-label-sm text-label-sm text-secondary font-bold border-b-2 border-secondary pb-1 px-3 transition-colors hover:text-primary" href="#inicio">Inicio</a>
+                <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#grilla">Grilla</a>
+                <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#noticias">Noticias</a>
+                <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors px-3" href="#pedidos">Pedidos</a>
+            </nav>
+            <button id="top-play-btn" class="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2 group whitespace-nowrap">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">play_circle</span>
+                Escuchar En Vivo
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-surface border-b border-outline-variant shadow-lg absolute top-20 left-0 w-full flex flex-col items-center py-4 gap-4 z-40">
+        <a class="font-label-sm text-secondary font-bold" href="#inicio" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Inicio</a>
+        <a class="font-label-sm text-on-surface-variant" href="#grilla" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Grilla</a>
+        <a class="font-label-sm text-on-surface-variant" href="#noticias" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Noticias</a>
+        <a class="font-label-sm text-on-surface-variant" href="#pedidos" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Pedidos</a>
+        <button id="mobile-top-play-btn" class="bg-primary text-on-primary font-label-sm px-6 py-2 rounded-lg mt-2 flex items-center gap-2">
+            <span class="material-symbols-outlined">play_circle</span> Escuchar En Vivo
+        </button>
+    </div>
 </header>
 <main class="pt-20">
 <!-- Hero Slider -->
@@ -573,6 +587,7 @@
         document.body.appendChild(audioPlayer);
 
         const topPlayBtn = document.getElementById('top-play-btn');
+        const mobileTopPlayBtn = document.getElementById('mobile-top-play-btn');
         const mainPlayBtn = document.getElementById('main-play-btn');
         const volumeSlider = document.getElementById('volume-slider');
 
@@ -586,17 +601,20 @@
                 audioPlayer.pause();
                 audioPlayer.src = ''; 
                 if (topPlayBtn) topPlayBtn.innerHTML = '<span class="material-symbols-outlined group-hover:scale-110 transition-transform">play_circle</span> Escuchar En Vivo';
+                if (mobileTopPlayBtn) mobileTopPlayBtn.innerHTML = '<span class="material-symbols-outlined">play_circle</span> Escuchar En Vivo';
                 if (mainPlayBtn) mainPlayBtn.innerHTML = '<span class="material-symbols-outlined text-5xl">play_arrow</span>';
             } else {
                 audioPlayer.src = streamUrl; 
                 audioPlayer.play();
                 if (topPlayBtn) topPlayBtn.innerHTML = '<span class="material-symbols-outlined group-hover:scale-110 transition-transform">pause_circle</span> Pausar';
+                if (mobileTopPlayBtn) mobileTopPlayBtn.innerHTML = '<span class="material-symbols-outlined">pause_circle</span> Pausar';
                 if (mainPlayBtn) mainPlayBtn.innerHTML = '<span class="material-symbols-outlined text-5xl">pause</span>';
             }
             isPlaying = !isPlaying;
         }
 
         if (topPlayBtn) topPlayBtn.addEventListener('click', togglePlay);
+        if (mobileTopPlayBtn) mobileTopPlayBtn.addEventListener('click', togglePlay);
         if (mainPlayBtn) mainPlayBtn.addEventListener('click', togglePlay);
 
         if (volumeSlider) {

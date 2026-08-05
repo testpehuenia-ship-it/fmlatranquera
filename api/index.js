@@ -73,6 +73,45 @@ async function initDb() {
 }
 initDb();
 
+const https = require('https');
+const http = require('http');
+
+function fetchOgImage(url) {
+    return new Promise((resolve) => {
+        if (!url || !url.startsWith('http')) return resolve('');
+        const lib = url.startsWith('https') ? https : http;
+        const req = lib.get(url, (res) => {
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                return fetchOgImage(res.headers.location).then(resolve);
+            }
+            
+            let data = '';
+            res.on('data', chunk => {
+                data += chunk.toString();
+                const match = data.match(/<meta[^>]*property="og:image"[^>]*content="([^">]+)"/i) || data.match(/<meta[^>]*name="twitter:image"[^>]*content="([^">]+)"/i);
+                if (match) {
+                    req.destroy();
+                    resolve(match[1]);
+                } else if (data.includes('</head>')) {
+                    req.destroy();
+                    resolve('');
+                }
+            });
+            res.on('end', () => {
+                const match = data.match(/<meta[^>]*property="og:image"[^>]*content="([^">]+)"/i);
+                resolve(match ? match[1] : '');
+            });
+        }).on('error', () => {
+            resolve('');
+        });
+        
+        req.setTimeout(5000, () => {
+            req.destroy();
+            resolve('');
+        });
+    });
+}
+
 // Cloudinary upload helper
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -430,6 +469,10 @@ app.get('/api/cron/rss', async (req, res) => {
                         }
                         
                         const linkUrl = item.link || '#';
+                        if (!imageUrl && linkUrl !== '#') {
+                            imageUrl = await fetchOgImage(linkUrl);
+                        }
+                        
                         const isMain = inserted === 0 ? 1 : 0;
                         await db.execute({
                             sql: `INSERT INTO news (title, excerpt, date, image_url, is_main, is_auto, link_url) VALUES (?, ?, ?, ?, ?, 1, ?)`,
