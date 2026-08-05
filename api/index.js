@@ -58,6 +58,11 @@ async function initDb() {
         title TEXT,
         location TEXT
     )`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS ads (
+        slot INTEGER PRIMARY KEY,
+        image_url TEXT,
+        link_url TEXT
+    )`);
     // Update existing news to JULIO 2026 for demo
     await db.execute(`UPDATE news SET date = 'JULIO 2026' WHERE date != 'JULIO 2026'`);
   } catch (error) {
@@ -71,6 +76,22 @@ const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
       let cld_upload_stream = cloudinary.uploader.upload_stream(
         { folder: "fmlatranquera" },
+        (error, result) => {
+           if (result) {
+             resolve(result);
+           } else {
+             reject(error);
+           }
+        }
+      );
+      streamifier.createReadStream(buffer).pipe(cld_upload_stream);
+  });
+};
+
+const uploadToCloudinaryWebP = (buffer) => {
+  return new Promise((resolve, reject) => {
+      let cld_upload_stream = cloudinary.uploader.upload_stream(
+        { folder: "fmlatranquera", format: "webp" },
         (error, result) => {
            if (result) {
              resolve(result);
@@ -436,6 +457,47 @@ app.get('/api/cron/rss', async (req, res) => {
         res.json({ message: "cron completed", logs });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Ads Routes
+app.get('/api/ads', async (req, res) => {
+    try {
+        const rs = await db.execute("SELECT * FROM ads");
+        res.json({ message: "success", data: rs.rows });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.post('/api/ads', upload.single('image'), async (req, res) => {
+    try {
+        const { slot, link_url } = req.body;
+        if (!slot) return res.status(400).json({ error: "Missing slot" });
+        if (!req.file) return res.status(400).json({ error: "No image file provided" });
+
+        const result = await uploadToCloudinaryWebP(req.file.buffer);
+        const imageUrl = result.secure_url;
+
+        await db.execute({
+            sql: "INSERT INTO ads (slot, image_url, link_url) VALUES (?, ?, ?) ON CONFLICT(slot) DO UPDATE SET image_url=excluded.image_url, link_url=excluded.link_url",
+            args: [parseInt(slot), imageUrl, link_url || '']
+        });
+        res.json({ message: "Ad saved successfully", url: imageUrl });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/ads/:slot', async (req, res) => {
+    try {
+        await db.execute({
+            sql: "DELETE FROM ads WHERE slot = ?",
+            args: [req.params.slot]
+        });
+        res.json({ message: "deleted" });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });

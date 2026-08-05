@@ -259,6 +259,9 @@
 </div>
 </section>
 
+<!-- Ad Slot 1 -->
+<div id="ad-slot-1" class="max-w-container-max mx-auto px-margin-desktop mt-10 hidden"></div>
+
 <!-- Grilla Semanal Section -->
 <section id="grilla" class="bg-surface-container-low py-16 border-y border-outline-variant mt-10 scroll-mt-24">
     <div class="max-w-container-max mx-auto px-margin-desktop">
@@ -295,6 +298,9 @@
     </div>
 </section>
 
+<!-- Ad Slot 2 -->
+<div id="ad-slot-2" class="max-w-container-max mx-auto px-margin-desktop mt-10 hidden"></div>
+
 <!-- Main Content Layout -->
 <div class="max-w-container-max mx-auto px-margin-desktop py-20 grid grid-cols-1 lg:grid-cols-12 gap-gutter">
 <!-- Left Column: News Grid -->
@@ -324,6 +330,9 @@
             </button>
         </form>
     </div>
+
+    <!-- Ad Slot 3 -->
+    <div id="ad-slot-3" class="w-full mb-8 hidden"></div>
 
     <!-- News Section -->
     <div id="noticias" class="flex items-center gap-4 mb-8 pt-8 scroll-mt-24">
@@ -355,6 +364,10 @@
 </div>
 </div>
 </div>
+
+<!-- Ad Slot 4 -->
+<div id="ad-slot-4" class="w-full hidden"></div>
+
 <!-- Grain Market Widget -->
 <div class="bg-primary text-on-primary p-8 rounded-lg">
 <h4 class="font-label-sm text-label-sm text-secondary-container uppercase tracking-widest mb-4">MERCADO DE GRANOS</h4>
@@ -382,6 +395,11 @@
 </div>
 </div>
 </div>
+</div>
+
+<!-- Ad Slot 5 -->
+<div id="ad-slot-5" class="w-full hidden"></div>
+
 <!-- Upcoming Events -->
 <div class="bg-secondary-container p-8 rounded-lg rustic-border">
 <h4 class="font-label-sm text-label-sm text-on-secondary-container uppercase tracking-widest mb-4">PRÓXIMOS EVENTOS</h4>
@@ -389,6 +407,10 @@
     <!-- Javascript will populate this -->
 </ul>
 </div>
+
+<!-- Ad Slot 6 -->
+<div id="ad-slot-6" class="w-full hidden"></div>
+
 </aside>
 </div>
 </main>
@@ -658,6 +680,30 @@
             }
         }
         loadEvents();
+
+        async function loadAds() {
+            try {
+                const res = await fetch('/api/ads');
+                const data = await res.json();
+                
+                if (data.data) {
+                    data.data.forEach(ad => {
+                        const slotContainer = document.getElementById('ad-slot-' + ad.slot);
+                        if (slotContainer) {
+                            let content = \`<img src="\${ad.image_url}" class="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition-opacity object-cover">\`;
+                            if (ad.link_url) {
+                                content = \`<a href="\${ad.link_url}" target="_blank" rel="noopener noreferrer" class="block w-full">\${content}</a>\`;
+                            }
+                            slotContainer.innerHTML = content;
+                            slotContainer.classList.remove('hidden');
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading ads:", err);
+            }
+        }
+        loadAds();
     </script>
     
     <!-- Floating WhatsApp Button -->
