@@ -80,7 +80,13 @@ function fetchOgImage(url) {
     return new Promise((resolve) => {
         if (!url || !url.startsWith('http')) return resolve('');
         const lib = url.startsWith('https') ? https : http;
-        const req = lib.get(url, (res) => {
+        
+        const options = {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            rejectUnauthorized: false
+        };
+
+        const req = lib.get(url, options, (res) => {
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 return fetchOgImage(res.headers.location).then(resolve);
             }
@@ -88,20 +94,19 @@ function fetchOgImage(url) {
             let data = '';
             res.on('data', chunk => {
                 data += chunk.toString();
-                const match = data.match(/<meta[^>]*property="og:image"[^>]*content="([^">]+)"/i) || data.match(/<meta[^>]*name="twitter:image"[^>]*content="([^">]+)"/i);
-                if (match) {
+                // Check if we hit </head> to stop downloading early
+                if (data.includes('</head>')) {
                     req.destroy();
-                    resolve(match[1]);
-                } else if (data.includes('</head>')) {
-                    req.destroy();
-                    resolve('');
+                    const match = data.match(/<meta[^>]*property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i) || data.match(/<meta[^>]*name=[\"']twitter:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i);
+                    resolve(match ? match[1] : '');
                 }
             });
             res.on('end', () => {
-                const match = data.match(/<meta[^>]*property="og:image"[^>]*content="([^">]+)"/i);
+                const match = data.match(/<meta[^>]*property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i) || data.match(/<meta[^>]*name=[\"']twitter:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i);
                 resolve(match ? match[1] : '');
             });
-        }).on('error', () => {
+        }).on('error', (e) => {
+            console.error('Error fetching image:', e);
             resolve('');
         });
         
